@@ -53,6 +53,25 @@ func (d *Decoder) DecodeVP8(fileName string) error {
 	if r := C.avformat_open_input(&formatCtx, cs, nil, nil); r < 0 {
 		return errors.New("Failed to open input file" + fileName)
 	}
+	if r := C.av_find_best_stream(formatCtx, C.AVMEDIA_TYPE_VIDEO, -1, -1, &d.codec, 0); r < 0 {
+		return errors.New("Failed to locate best video codec")
+	}
+
+	//strm := C.av_find_best_stream(formatCtx, C.AVMEDIA_TYPE_VIDEO, -1, -1, &d.codec, 0)
+	fmt.Printf("%+v\n", d.codecCtx)
+	d.codecCtx = (**formatCtx.streams).codec
+	fmt.Printf("%+v\n", d.codecCtx)
+
+	//SWSCONTEXT
+	var swCtx *C.struct_SwsContext
+	swCtx = C.sws_getContext(d.codecCtx.width,
+		d.codecCtx.height,
+		d.codecCtx.pix_fmt,
+		d.codecCtx.width,
+		d.codecCtx.height,
+		C.PIX_FMT_RGB24,
+		C.SWS_FAST_BILINEAR, nil, nil, nil)
+	//SWSCONTEXT
 
 	frame = C.av_frame_alloc()
 	defer C.av_frame_free(&frame)
@@ -76,20 +95,20 @@ func (d *Decoder) DecodeVP8(fileName string) error {
 	//Allocate picture sub thing of output frame
 	C.avpicture_alloc((*C.AVPicture)(unsafe.Pointer(&pngFrame)), C.PIX_FMT_RGB24, d.codecCtx.width, d.codecCtx.height)
 	//sws_scale in to the new frame
-	C.sws_scale(swCtx, frame.data, frame.linesize, 0, frame.height, pngFrame.data, pngFrame.linesize)
+	C.sws_scale(swCtx, &frame.data[0], &frame.linesize[0], 0, frame.height, &pngFrame.data[0], &pngFrame.linesize[0])
 	//Find PNG encoder
 	var outCodec *C.AVCodec = C.avcodec_find_decoder(C.CODEC_ID_PNG)
-	var outCodecCtx *C.AVCodecContext = C.avcodec_alloc_context3(codec)
+	var outCodecCtx *C.AVCodecContext = C.avcodec_alloc_context3(d.codec)
 	if outCodecCtx == nil {
 		return errors.New("Failed to allocate output codec")
 	}
 	//Set out output context
-	outCodecCtx.width = codecCtx.width
-	outCodecCtx.height = codecCtx.height
+	outCodecCtx.width = d.codecCtx.width
+	outCodecCtx.height = d.codecCtx.height
 	outCodecCtx.pix_fmt = C.PIX_FMT_RGB24
 	outCodecCtx.codec_type = C.AVMEDIA_TYPE_VIDEO
-	outCodecCtx.time_base.num = codecCtx.time_base.num
-	outCodecCtx.time_base.den = codecCtx.time_base.den
+	outCodecCtx.time_base.num = d.codecCtx.time_base.num
+	outCodecCtx.time_base.den = d.codecCtx.time_base.den
 	//open encoder
 	if outCodec == nil || C.avcodec_open2(outCodecCtx, outCodec, nil) < 0 {
 		return errors.New("Failed to open codec")
@@ -101,7 +120,7 @@ func (d *Decoder) DecodeVP8(fileName string) error {
 	C.av_init_packet(outPacket)
 	//encode png in to output packet
 	got = 0
-	if C.avcodec_encode_video2(outCodecCtx, &outPacket, pngFrame, &got) < 0 || got == 0 {
+	if C.avcodec_encode_video2(outCodecCtx, outPacket, pngFrame, &got) < 0 || got == 0 {
 		return errors.New("Failed to encode PNG")
 	}
 	//Write out output packet to disk
