@@ -8,7 +8,7 @@ import (
 	"os"
 	"testing"
 
-	_ "github.com/Soreil/imager/webm"
+	//	_ "github.com/Soreil/imager/webm"
 )
 
 const dataDirectory = "testData/"
