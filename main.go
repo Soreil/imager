@@ -8,6 +8,8 @@ package imager
 #include <libavformat/avformat.h>
 #include <libswscale/swscale.h>
 
+#define PIX_FMT_CHOSEN PIX_FMT_RGBA
+
 #define CHECK_ERR(ERR) {if ((ERR)<0) return -1; }
 
 int convert_first_frame_to_png(const char *inputVideoFileName, const char *outputPngName)
@@ -33,7 +35,7 @@ int convert_first_frame_to_png(const char *inputVideoFileName, const char *outpu
 			codecCtx->pix_fmt,
 			codecCtx->width,
 			codecCtx->height,
-			PIX_FMT_RGB24,
+			PIX_FMT_CHOSEN,
 			SWS_FAST_BILINEAR, NULL, NULL, NULL);
 
 	for (;;)
@@ -52,8 +54,10 @@ int convert_first_frame_to_png(const char *inputVideoFileName, const char *outpu
 			if (got)
 			{
 				AVFrame * rgbFrame = av_frame_alloc();
-				avpicture_alloc((AVPicture *)rgbFrame, PIX_FMT_RGB24, codecCtx->width, codecCtx->height);
+				avpicture_alloc((AVPicture *)rgbFrame, PIX_FMT_CHOSEN, codecCtx->width, codecCtx->height);
 				sws_scale(swCtx, frame->data, frame->linesize, 0, frame->height, rgbFrame->data, rgbFrame->linesize);
+				//TODO(sjon): sws_scale performed, we can dump the pixels at this point to work with as raw RGBA data
+
 				rgbFrame->height = frame->height;
 				rgbFrame->width = frame->width;
 				rgbFrame->format = frame->format;
@@ -65,7 +69,7 @@ int convert_first_frame_to_png(const char *inputVideoFileName, const char *outpu
 
 				outCodecCtx->width = codecCtx->width;
 				outCodecCtx->height = codecCtx->height;
-				outCodecCtx->pix_fmt = PIX_FMT_RGBA;
+				outCodecCtx->pix_fmt = PIX_FMT_CHOSEN;
 				outCodecCtx->codec_type = AVMEDIA_TYPE_VIDEO;
 				outCodecCtx->time_base.num = codecCtx->time_base.num;
 				outCodecCtx->time_base.den = codecCtx->time_base.den;
@@ -96,14 +100,103 @@ int convert_first_frame_to_png(const char *inputVideoFileName, const char *outpu
 		}
 	}
 }
+
+AVFrame * convert_first_frame_to_raw(const char *inputVideoFileName)
+{
+	av_register_all();
+	avcodec_register_all();
+
+	AVFormatContext * ctx = NULL;
+	int err = avformat_open_input(&ctx, inputVideoFileName, NULL, NULL);
+	CHECK_ERR(err);
+	err = avformat_find_stream_info(ctx,NULL);
+	CHECK_ERR(err);
+
+	AVCodec * codec = NULL;
+	int strm = av_find_best_stream(ctx, AVMEDIA_TYPE_VIDEO, -1, -1, &codec, 0);
+
+	AVCodecContext * codecCtx = ctx->streams[strm]->codec;
+	err = avcodec_open2(codecCtx, codec, NULL);
+	CHECK_ERR(err);
+
+	struct SwsContext * swCtx = sws_getContext(codecCtx->width,
+			codecCtx->height,
+			codecCtx->pix_fmt,
+			codecCtx->width,
+			codecCtx->height,
+			PIX_FMT_CHOSEN,
+			SWS_FAST_BILINEAR, NULL, NULL, NULL);
+
+	for (;;)
+	{
+		AVPacket pkt;
+		err = av_read_frame(ctx, &pkt);
+		CHECK_ERR(err);
+
+		if (pkt.stream_index == strm)
+		{
+			int got = 0;
+			AVFrame * frame = av_frame_alloc();
+			err = avcodec_decode_video2(codecCtx, frame, &got, &pkt);
+			CHECK_ERR(err);
+
+			if (got)
+			{
+				AVFrame * rgbFrame = av_frame_alloc();
+				avpicture_alloc((AVPicture *)rgbFrame, PIX_FMT_CHOSEN, codecCtx->width, codecCtx->height);
+				sws_scale(swCtx, frame->data, frame->linesize, 0, frame->height, rgbFrame->data, rgbFrame->linesize);
+				//TODO(sjon): sws_scale performed, we can dump the pixels at this point to work with as raw RGBA data
+				rgbFrame->height = frame->height;
+				rgbFrame->width = frame->width;
+				rgbFrame->format = frame->format;
+
+				return rgbFrame;
+			}
+			//av_frame_free(&frame);
+		}
+	}
+}
 */
 import "C"
-import "unsafe"
+import (
+	"image"
+	"unsafe"
 
-func thumbnailWebm(input, output string) {
+	"github.com/nfnt/resize"
+)
+
+var normal image.Point = image.Point{X: 250, Y: 250}
+var sharp image.Point = image.Point{X: 500, Y: 500}
+
+//Extracts a frame and writes to file as PNG
+func videoToPNG(input, output string) {
 	cin := C.CString(input)
 	cout := C.CString(output)
 	C.convert_first_frame_to_png(cin, cout)
 	defer C.free(unsafe.Pointer(cin))
 	defer C.free(unsafe.Pointer(cout))
+}
+
+type avFrame struct {
+	frame *C.AVFrame
+}
+
+func extractVideoFrame(input string) avFrame {
+	cin := C.CString(input)
+	defer C.free(unsafe.Pointer(cin))
+
+	frame := C.convert_first_frame_to_raw(cin)
+	return avFrame{frame}
+}
+
+func avFrameImage(frame *avFrame) image.RGBA {
+	f := frame.frame
+	bs := C.GoBytes(unsafe.Pointer(f.data[0]), f.linesize[0]*f.height)
+	return image.RGBA{Pix: bs,
+		Stride: int(f.linesize[0]),
+		Rect:   image.Rectangle{Min: image.Point{X: 0, Y: 0}, Max: image.Point{X: int(f.width), Y: int(f.height)}}}
+}
+
+func scale(img image.Image, p image.Point) image.Image {
+	return resize.Thumbnail(uint(p.X), uint(p.Y), img, resize.Bilinear)
 }
