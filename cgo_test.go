@@ -41,8 +41,7 @@ func TestWebmToPNG(t *testing.T) {
 	}
 
 	//TODO(sjon):add this stuff in to a pipeline
-	frame := extractVideoFrame(filename)
-	img := avFrameImage(&frame)
+	img := extractVideoFrame(filename)
 
 	out, err := os.Create(filename + ".png")
 	if err != nil {

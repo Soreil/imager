@@ -1,8 +1,9 @@
+//Converts media types in to thumbnails
 package imager
 
 // #cgo pkg-config: libavcodec libavutil libavformat libswscale
+// #cgo CFLAGS: -Wno-int-conversion -Wno-incompatible-pointer-types
 /*
-
 #include <libavcodec/avcodec.h>
 #include <libavutil/frame.h>
 #include <libavformat/avformat.h>
@@ -177,20 +178,16 @@ func videoToPNG(input, output string) {
 	defer C.free(unsafe.Pointer(cout))
 }
 
-type avFrame struct {
-	frame *C.AVFrame
-}
+////Wrapper around FFmpeg AVFrame
+//type avFrame struct {
+//	frame *C.AVFrame
+//}
 
-func extractVideoFrame(input string) avFrame {
+func extractVideoFrame(input string) image.RGBA {
 	cin := C.CString(input)
 	defer C.free(unsafe.Pointer(cin))
 
-	frame := C.convert_first_frame_to_raw(cin)
-	return avFrame{frame}
-}
-
-func avFrameImage(frame *avFrame) image.RGBA {
-	f := frame.frame
+	f := C.convert_first_frame_to_raw(cin)
 	bs := C.GoBytes(unsafe.Pointer(f.data[0]), f.linesize[0]*f.height)
 	return image.RGBA{Pix: bs,
 		Stride: int(f.linesize[0]),
