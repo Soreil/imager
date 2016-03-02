@@ -28,9 +28,19 @@ type testCase struct {
 	outFormat filetype
 }
 
-const dataDirectory = "testData/"
+const inputDir = "inputData/"
+const outputDir = "outputData/"
 
-var cases = []testCase{{dataDirectory + "wafel.webm", dataDirectory + "wafel.webm.png", webmType, pngType}}
+var cases = []testCase{
+	{inputDir + "wafel.webm", outputDir + "wafel.webm.png", webmType, pngType},
+	{inputDir + "wafel.webm", outputDir + "wafel.webm.jpg", webmType, jpegType},
+	{inputDir + "yuno.jpg", outputDir + "yuno.jpg.png", jpegType, pngType},
+	{inputDir + "yuno.jpg", outputDir + "yuno.jpg.jpg", jpegType, jpegType},
+	{inputDir + "yuno.png", outputDir + "yuno.png.png", pngType, pngType},
+	{inputDir + "yuno.png", outputDir + "yuno.png.jpg", pngType, jpegType},
+	{inputDir + "yuno.gif", outputDir + "yuno.gif.png", gifType, pngType},
+	{inputDir + "yuno.gif", outputDir + "yuno.gif.jpg", gifType, jpegType},
+}
 
 func TestDecode(t *testing.T) {
 	for _, test := range cases {
