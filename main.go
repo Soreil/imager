@@ -166,7 +166,10 @@ import (
 	"github.com/nfnt/resize"
 )
 
+//Regular quality preset
 var normal image.Point = image.Point{X: 250, Y: 250}
+
+//High quality preset
 var sharp image.Point = image.Point{X: 500, Y: 500}
 
 //Extracts a frame and writes to file as PNG
@@ -183,17 +186,20 @@ func videoToPNG(input, output string) {
 //	frame *C.AVFrame
 //}
 
-func extractVideoFrame(input string) image.RGBA {
+//Takes in a file and returns an image
+func extractVideoFrame(input string) image.Image {
 	cin := C.CString(input)
 	defer C.free(unsafe.Pointer(cin))
 
 	f := C.convert_first_frame_to_raw(cin)
 	bs := C.GoBytes(unsafe.Pointer(f.data[0]), f.linesize[0]*f.height)
-	return image.RGBA{Pix: bs,
+	return &image.RGBA{Pix: bs,
 		Stride: int(f.linesize[0]),
 		Rect:   image.Rectangle{Min: image.Point{X: 0, Y: 0}, Max: image.Point{X: int(f.width), Y: int(f.height)}}}
 }
 
+//TODO(sjon): evaluate best resizing algorithm
+//Resizes the image to max dimensions
 func scale(img image.Image, p image.Point) image.Image {
 	return resize.Thumbnail(uint(p.X), uint(p.Y), img, resize.Bilinear)
 }

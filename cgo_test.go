@@ -48,7 +48,7 @@ func TestWebmToPNG(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	i := scale(&img, normal)
+	i := scale(img, normal)
 	if err := png.Encode(out, i); err != nil {
 		t.Fatal(err)
 	}
