@@ -1,28 +1,52 @@
 package imager
 
 import (
+	"bytes"
+	"image"
 	"image/jpeg"
 	"image/png"
 	"os/exec"
+	"strings"
 )
 
 var pngEncoder = png.Encoder{png.BestCompression}
 var jpgOptions = jpeg.Options{jpeg.DefaultQuality}
 
-//Compresses a PNG file to a more compressed PNG
-func compressPNG(fileName string) (string, error) {
-	const prefix = "small_"
-	if err := exec.Command("pngquant", fileName, prefix+fileName).Run(); err != nil {
-		return "", err
+type speed string
+
+const (
+	bruteforce speed = "1"
+	standard   speed = "3"
+	fast       speed = "10"
+	fastest    speed = "11"
+)
+
+//Compress PNG using imagequant
+func CompressPNG(img image.Image, s speed) (image.Image, error) {
+	var w bytes.Buffer
+	err := png.Encode(&w, img)
+	if err != nil {
+		return nil, err
 	}
-	return prefix + fileName, nil
+
+	compressed, err := compressBytes(w.Bytes(), s)
+	if err != nil {
+		return nil, err
+	}
+
+	output, err := png.Decode(bytes.NewReader(compressed))
+	return output, err
 }
 
-//Compresses a JPG file to a more compressed JPG
-func compressJPG(fileName string) (string, error) {
-	const prefix = "small_"
-	if err := exec.Command("command", fileName, prefix+fileName).Run(); err != nil {
-		return "", err
+//Add imagequant structures here
+func compressBytes(input []byte, speed speed) ([]byte, error) {
+	cmd := exec.Command("pngquant", "-", "--speed", string(speed))
+	cmd.Stdin = strings.NewReader(string(input))
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	if err := cmd.Run(); err != nil {
+		return nil, err
 	}
-	return prefix + fileName, nil
+
+	return out.Bytes(), nil
 }
