@@ -43,7 +43,7 @@ func Thumbnail(r io.Reader, s size) (io.Reader, error) {
 		if err := jpeg.Encode(&out, img, &jpgOptions); err != nil {
 			return nil, err
 		}
-	} else if imgString == "png" || imgString == "webm" {
+	} else if imgString == "png" || imgString == "webm" || imgString == "pdf" || imgString == "gif" {
 		img, err := CompressPNG(img, fastest)
 		if err != nil {
 			return nil, err

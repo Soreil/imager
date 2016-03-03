@@ -4,6 +4,10 @@ import (
 	"io"
 	"os"
 	"testing"
+
+	_ "image/gif"
+
+	_ "github.com/Soreil/webm"
 )
 
 type filetype int
@@ -44,7 +48,7 @@ func TestDecode(t *testing.T) {
 		}
 		thumb, err := Thumbnail(file, normal)
 		if err != nil {
-			t.Fatal(err)
+			t.Fatal(err, test)
 		}
 		out, err := os.Create(test.output)
 		if err != nil {
