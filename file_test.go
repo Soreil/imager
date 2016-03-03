@@ -7,6 +7,7 @@ import (
 
 	_ "image/gif"
 
+	_ "github.com/Soreil/svg"
 	_ "github.com/Soreil/webm"
 )
 
@@ -18,6 +19,8 @@ const (
 	gifType
 	webmType
 	mp4Type
+	svgType
+	pdfType
 )
 
 type testCase struct {
@@ -35,6 +38,8 @@ var cases = []testCase{
 	{inputDir + "yuno.png", outputDir + "yuno.png.png", pngType},
 	{inputDir + "yuno.gif", outputDir + "yuno.gif.png", gifType},
 	{inputDir + "PNG_transparency_demonstration_1.png", outputDir + "PNG_transparency_demonstration_1.png.png", pngType},
+	{inputDir + "The United States of America.svg", outputDir + "The United States of America.svg.png", svgType},
+	{inputDir + "pdf.pdf", outputDir + "pdf.pdf.png", pdfType},
 }
 
 func TestDecode(t *testing.T) {

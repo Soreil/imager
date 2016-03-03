@@ -6,10 +6,7 @@ import (
 	"errors"
 	"image"
 	"image/jpeg"
-	"image/png"
 	"io"
-	"os/exec"
-	"strings"
 
 	_ "github.com/Soreil/webm"
 	"github.com/nfnt/resize"
@@ -25,7 +22,7 @@ var sharp size = size(image.Point{X: 500, Y: 500})
 
 //TODO(sjon): evaluate best resizing algorithm
 //Resizes the image to max dimensions
-func scale(img image.Image, p image.Point) image.Image {
+func scale(img image.Image, p size) image.Image {
 	return resize.Thumbnail(uint(p.X), uint(p.Y), img, resize.Bilinear)
 }
 
@@ -36,14 +33,14 @@ func Thumbnail(r io.Reader, s size) (io.Reader, error) {
 	if err != nil {
 		return nil, err
 	}
-	img = scale(img, image.Point(s))
+	img = scale(img, s)
 
 	var out bytes.Buffer
 	if imgString == "jpeg" {
 		if err := jpeg.Encode(&out, img, &jpgOptions); err != nil {
 			return nil, err
 		}
-	} else if imgString == "png" || imgString == "webm" || imgString == "pdf" || imgString == "gif" {
+	} else if imgString == "png" || imgString == "webm" || imgString == "pdf" || imgString == "gif" || imgString == "svg" {
 		img, err := CompressPNG(img, fastest)
 		if err != nil {
 			return nil, err
@@ -55,21 +52,4 @@ func Thumbnail(r io.Reader, s size) (io.Reader, error) {
 		return nil, errors.New("I give up, I don't know what this file type is")
 	}
 	return &out, nil
-}
-
-//Encode SVG to PNG as image.Image
-func svgToImage(input []byte) (image.Image, error) {
-	cmd := exec.Command("rsvg-convert")
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	cmd.Stdin = strings.NewReader(string(input))
-
-	if err := cmd.Run(); err != nil {
-		return nil, err
-	}
-	img, err := png.Decode(bytes.NewReader(out.Bytes()))
-	if err != nil {
-		return nil, err
-	}
-	return img, nil
 }
