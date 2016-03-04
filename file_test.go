@@ -4,6 +4,8 @@ import (
 	"io"
 	"os"
 	"testing"
+	"sync"
+	"time"
 )
 
 type filetype int
@@ -41,24 +43,32 @@ func TestDecode(t *testing.T) {
 	if _,err := os.Stat(outputDir); err != nil {
 		os.Mkdir(outputDir,os.ModeDir+0755)
 	}
+	var wg sync.WaitGroup
 	for _, test := range cases {
-		if _, err := os.Stat(test.input); err != nil {
-			t.Fatal(err)
-		}
-		file, err := os.Open(test.input)
-		if err != nil {
-			t.Fatal(err)
-		}
-		thumb, err := Thumbnail(file, Normal)
-		if err != nil {
-			t.Fatal(err, test)
-		}
-		out, err := os.Create(test.output)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if _, err := io.Copy(out, thumb); err != nil {
-			t.Fatal(err)
-		}
+		wg.Add(1)
+		startingTime := time.Now()
+		go func(test testCase) {
+			if _, err := os.Stat(test.input); err != nil {
+				t.Fatal(err)
+			}
+			file, err := os.Open(test.input)
+			if err != nil {
+				t.Fatal(err)
+			}
+			thumb, err := Thumbnail(file, Normal)
+			if err != nil {
+				t.Fatal(err, test)
+			}
+			out, err := os.Create(test.output)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err := io.Copy(out, thumb); err != nil {
+				t.Fatal(err)
+			}
+			t.Log(time.Now().Sub(startingTime),test)
+			wg.Done()
+		}(test)
 	}
+	wg.Wait()
 }
