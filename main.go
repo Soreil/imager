@@ -5,10 +5,14 @@ import (
 	"bytes"
 	"errors"
 	"image"
+	_ "image/gif"
 	"image/jpeg"
 	"io"
 
+	_ "github.com/Soreil/pdf"
+	_ "github.com/Soreil/svg"
 	_ "github.com/Soreil/webm"
+
 	"github.com/nfnt/resize"
 )
 

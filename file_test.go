@@ -4,12 +4,6 @@ import (
 	"io"
 	"os"
 	"testing"
-
-	_ "image/gif"
-
-	_ "github.com/Soreil/pdf"
-	_ "github.com/Soreil/svg"
-	_ "github.com/Soreil/webm"
 )
 
 type filetype int
