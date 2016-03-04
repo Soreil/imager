@@ -8,35 +8,22 @@ import (
 	"time"
 )
 
-type filetype int
-
-const (
-	pngType filetype = iota
-	jpegType
-	gifType
-	webmType
-	mp4Type
-	svgType
-	pdfType
-)
-
 type testCase struct {
 	input    string
 	output   string
-	inFormat filetype
 }
 
 const inputDir = "inputData/"
 const outputDir = "outputData/"
 
 var cases = []testCase{
-	{inputDir + "wafel.webm", outputDir + "wafel.webm.png", webmType},
-	{inputDir + "yuno.jpg", outputDir + "yuno.jpg.jpg", jpegType},
-	{inputDir + "yuno.png", outputDir + "yuno.png.png", pngType},
-	{inputDir + "yuno.gif", outputDir + "yuno.gif.png", gifType},
-	{inputDir + "PNG_transparency_demonstration_1.png", outputDir + "PNG_transparency_demonstration_1.png.png", pngType},
-	{inputDir + "The United States of America.svg", outputDir + "The United States of America.svg.png", svgType},
-	{inputDir + "pdf.pdf", outputDir + "pdf.pdf.png", pdfType},
+	{inputDir + "wafel.webm", outputDir + "wafel.webm.png"},
+	{inputDir + "yuno.jpg", outputDir + "yuno.jpg.jpg"},
+	{inputDir + "yuno.png", outputDir + "yuno.png.png"},
+	{inputDir + "yuno.gif", outputDir + "yuno.gif.png"},
+	{inputDir + "PNG_transparency_demonstration_1.png", outputDir + "PNG_transparency_demonstration_1.png.png"},
+	{inputDir + "The United States of America.svg", outputDir + "The United States of America.svg.png"},
+	{inputDir + "pdf.pdf", outputDir + "pdf.pdf.png"},
 }
 
 func TestDecode(t *testing.T) {
