@@ -1,18 +1,18 @@
 # imager
 High performance thumbnailer for integration with Go programs.
 
-1 ##Dependencies
- -WebM driver
+##Dependencies
+1. WebM driver
   +libavcodec 
   +libavutil 
   +libavformat 
   +libswscale
- -SVG driver
+2. SVG driver
   +rsvg-convert
- -PDF driver
+3. PDF driver
   +ghostscript built with PDF support
 
- -PNG compressor
+1. PNG compressor
   +pngquant
 
 ##Usage
