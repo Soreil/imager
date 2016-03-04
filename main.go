@@ -1,4 +1,4 @@
-//Converts media types in to thumbnails
+//Converts media types in to size optimised thumbnails
 package imager
 
 import (
@@ -16,23 +16,21 @@ import (
 	"github.com/nfnt/resize"
 )
 
-type size image.Point
-
 //Regular quality preset
-var Normal size = size(image.Point{X: 250, Y: 250})
+var Normal = image.Point{X: 250, Y: 250}
 
 //High quality preset
-var Sharp size = size(image.Point{X: 500, Y: 500})
+var Sharp = image.Point{X: 500, Y: 500}
 
 //TODO(sjon): evaluate best resizing algorithm
 //Resizes the image to max dimensions
-func scale(img image.Image, p size) image.Image {
+func scale(img image.Image, p image.Point) image.Image {
 	return resize.Thumbnail(uint(p.X), uint(p.Y), img, resize.Bilinear)
 }
 
 //Makes a thumbnail out of a decodable media file.
 //Sizes are the maximum dimensions of the thumbnail
-func Thumbnail(r io.Reader, s size) (io.Reader, string, string, error) {
+func Thumbnail(r io.Reader, s image.Point) (io.Reader, string, string, error) {
 	var outputFormat string
 	img, imgString, err := image.Decode(r)
 	if err != nil {
