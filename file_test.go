@@ -7,6 +7,7 @@ import (
 
 	_ "image/gif"
 
+	_ "github.com/Soreil/pdf"
 	_ "github.com/Soreil/svg"
 	_ "github.com/Soreil/webm"
 )

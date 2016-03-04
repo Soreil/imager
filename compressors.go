@@ -5,11 +5,12 @@ import (
 	"image"
 	"image/jpeg"
 	"image/png"
+	"io"
 	"os/exec"
 	"strings"
 )
 
-var pngEncoder = png.Encoder{png.BestCompression}
+var pngEncoder = png.Encoder{png.NoCompression}
 var jpgOptions = jpeg.Options{jpeg.DefaultQuality}
 
 type speed string
@@ -22,20 +23,19 @@ const (
 )
 
 //Compress PNG using imagequant
-func CompressPNG(img image.Image, s speed) (image.Image, error) {
+func CompressPNG(out io.Writer, img image.Image, s speed) error {
 	var w bytes.Buffer
 	err := png.Encode(&w, img)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	compressed, err := compressBytes(w.Bytes(), s)
 	if err != nil {
-		return nil, err
+		return err
 	}
-
-	output, err := png.Decode(bytes.NewReader(compressed))
-	return output, err
+	_, err = out.Write(compressed)
+	return err
 }
 
 //Add imagequant structures here
