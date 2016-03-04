@@ -1,13 +1,22 @@
 # imager
-CGo FFmpeg bindings for thumbnailing WebM video.
-CGo PNGQuant bindings for reducing PNG file sizes.
+High performance thumbnailer for integration with Go programs.
 
-The goal is to have GIF,PNG,WEBM,JPEG all be represented by a single intermediary pixel format and raw pixel data.
-This will be worked on by the Go image package, the idea for now it to have it all be RGBA.
+##Dependencies:
+-WebM driver
+--libavcodec 
+--libavutil 
+--libavformat 
+--libswscale
+-SVG driver
+--rsvg-convert
+-PDF driver
+--ghostscript built with PDF support
 
-This will be scaled to 250x250 for low quality thumb and 500x500 for high quality.
+-PNG compressor
+--pngquant
 
-Only JPEG has no transparency, for that the output format is JPEG too because of that
-The rest all need PNG thumbnails to maintain transparency.
-Well GIF could have GIF thumbnails.
+##Usage:
+The package can be called with an io.Reader containing a valid  supported media type and a desired thumbnail size. Depending on the features of the filetype given the output will be PNG (transparency) or JPEG.
+In case of a desire to use other drivers for the formats supported than those maintained by me you will have different dependencies for those parts.
 
+Manually setting input to output file type associations and compression levels (per file) will possibly be implemented in the future. 
