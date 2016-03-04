@@ -3,17 +3,17 @@ High performance thumbnailer for integration with Go programs.
 
 ##Dependencies
 1. WebM driver
-  +libavcodec 
-  +libavutil 
-  +libavformat 
-  +libswscale
+libavcodec 
+libavutil 
+libavformat 
+libswscale
 2. SVG driver
-  +rsvg-convert
+rsvg-convert
 3. PDF driver
-  +ghostscript built with PDF support
+ghostscript built with PDF support
 
 1. PNG compressor
-  +pngquant
+pngquant
 
 ##Usage
 The package can be called with an io.Reader containing a valid  supported media type and a desired thumbnail size. Depending on the features of the filetype given the output will be PNG (transparency) or JPEG.
