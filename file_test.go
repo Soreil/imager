@@ -38,6 +38,9 @@ var cases = []testCase{
 }
 
 func TestDecode(t *testing.T) {
+	if _,err := os.Stat(outputDir); err != nil {
+		os.Mkdir(outputDir,os.ModeDir+0755)
+	}
 	for _, test := range cases {
 		if _, err := os.Stat(test.input); err != nil {
 			t.Fatal(err)
@@ -46,7 +49,7 @@ func TestDecode(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		thumb, err := Thumbnail(file, normal)
+		thumb, err := Thumbnail(file, Normal)
 		if err != nil {
 			t.Fatal(err, test)
 		}

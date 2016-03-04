@@ -23,7 +23,7 @@ const (
 )
 
 //Compress PNG using imagequant
-func CompressPNG(out io.Writer, img image.Image, s speed) error {
+func compressPNG(out io.Writer, img image.Image, s speed) error {
 	var w bytes.Buffer
 	err := png.Encode(&w, img)
 	if err != nil {

@@ -19,10 +19,10 @@ import (
 type size image.Point
 
 //Regular quality preset
-var normal size = size(image.Point{X: 250, Y: 250})
+var Normal size = size(image.Point{X: 250, Y: 250})
 
 //High quality preset
-var sharp size = size(image.Point{X: 500, Y: 500})
+var Sharp size = size(image.Point{X: 500, Y: 500})
 
 //TODO(sjon): evaluate best resizing algorithm
 //Resizes the image to max dimensions
@@ -45,7 +45,7 @@ func Thumbnail(r io.Reader, s size) (io.Reader, error) {
 			return nil, err
 		}
 	} else if imgString == "png" || imgString == "webm" || imgString == "pdf" || imgString == "gif" || imgString == "svg" {
-		err := CompressPNG(&out, img, fast)
+		err := compressPNG(&out, img, fast)
 		if err != nil {
 			return nil, err
 		}
