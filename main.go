@@ -32,25 +32,28 @@ func scale(img image.Image, p size) image.Image {
 
 //Makes a thumbnail out of a decodable media file.
 //Sizes are the maximum dimensions of the thumbnail
-func Thumbnail(r io.Reader, s size) (io.Reader, error) {
+func Thumbnail(r io.Reader, s size) (io.Reader, string, string, error) {
+	var outputFormat string
 	img, imgString, err := image.Decode(r)
 	if err != nil {
-		return nil, err
+		return nil, "", outputFormat, err
 	}
 	img = scale(img, s)
 
 	var out bytes.Buffer
 	if imgString == "jpeg" {
+		outputFormat = "jpeg"
 		if err := jpeg.Encode(&out, img, &jpgOptions); err != nil {
-			return nil, err
+			return nil, imgString, outputFormat, err
 		}
 	} else if imgString == "png" || imgString == "webm" || imgString == "pdf" || imgString == "gif" || imgString == "svg" {
+		outputFormat = "png"
 		err := compressPNG(&out, img, fast)
 		if err != nil {
-			return nil, err
+			return nil, imgString, outputFormat, err
 		}
 	} else {
-		return nil, errors.New("I give up, I don't know what this file type is")
+		return nil, imgString, outputFormat, errors.New("I give up, I don't know what this file type is")
 	}
-	return &out, nil
+	return &out, imgString, outputFormat, nil
 }

@@ -3,8 +3,8 @@ package imager
 import (
 	"io"
 	"os"
-	"testing"
 	"sync"
+	"testing"
 	"time"
 )
 
@@ -40,8 +40,8 @@ var cases = []testCase{
 }
 
 func TestDecode(t *testing.T) {
-	if _,err := os.Stat(outputDir); err != nil {
-		os.Mkdir(outputDir,os.ModeDir+0755)
+	if _, err := os.Stat(outputDir); err != nil {
+		os.Mkdir(outputDir, os.ModeDir+0755)
 	}
 	var wg sync.WaitGroup
 	for _, test := range cases {
@@ -55,9 +55,9 @@ func TestDecode(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			thumb, err := Thumbnail(file, Normal)
+			thumb, inFormat, outFormat, err := Thumbnail(file, Normal)
 			if err != nil {
-				t.Fatal(err, test)
+				t.Fatal(err, inFormat, outFormat, test)
 			}
 			out, err := os.Create(test.output)
 			if err != nil {
@@ -66,7 +66,7 @@ func TestDecode(t *testing.T) {
 			if _, err := io.Copy(out, thumb); err != nil {
 				t.Fatal(err)
 			}
-			t.Log(time.Now().Sub(startingTime),test)
+			t.Log(time.Now().Sub(startingTime), test)
 			wg.Done()
 		}(test)
 	}
