@@ -1,7 +1,7 @@
 # imager
 High performance thumbnailer for integration with Go programs.
 
-##Dependencies:
+1 ##Dependencies
  -WebM driver
   +libavcodec 
   +libavutil 
@@ -15,7 +15,7 @@ High performance thumbnailer for integration with Go programs.
  -PNG compressor
   +pngquant
 
-##Usage:
+##Usage
 The package can be called with an io.Reader containing a valid  supported media type and a desired thumbnail size. Depending on the features of the filetype given the output will be PNG (transparency) or JPEG.
 In case of a desire to use other drivers for the formats supported than those maintained by me you will have different dependencies for those parts.
 
