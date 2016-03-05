@@ -6,11 +6,13 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/Soreil/mp3"
 )
 
 type testCase struct {
-	input    string
-	output   string
+	input  string
+	output string
 }
 
 const inputDir = "inputData/"
@@ -58,4 +60,8 @@ func TestDecode(t *testing.T) {
 		}(test)
 	}
 	wg.Wait()
+}
+
+func TestMP3(t *testing.T) {
+	t.Log(mp3.IsMP3(inputDir + "example.mp3"))
 }
