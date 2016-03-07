@@ -37,6 +37,7 @@ func TestDecode(t *testing.T) {
 		wg.Add(1)
 		startingTime := time.Now()
 		go func(test testCase) {
+			defer wg.Done()
 			if _, err := os.Stat(test.input); err != nil {
 				t.Fatal(err)
 			}
@@ -56,7 +57,6 @@ func TestDecode(t *testing.T) {
 				t.Fatal(err)
 			}
 			t.Log(time.Now().Sub(startingTime), test)
-			wg.Done()
 		}(test)
 	}
 	wg.Wait()
