@@ -7,6 +7,7 @@ import (
 	"image/png"
 	"io"
 	"os/exec"
+	"runtime"
 	"strings"
 )
 
@@ -40,7 +41,13 @@ func compressPNG(out io.Writer, img image.Image, s speed) error {
 
 //Add imagequant structures here
 func compressBytes(input []byte, speed speed) ([]byte, error) {
-	cmd := exec.Command("pngquant", "-", "--speed", string(speed))
+	var cmd *exec.Cmd
+	//Needed because we can't rely on the existing shell on Windows.
+	if runtime.GOOS == "windows" {
+		cmd = exec.Command("cmd", "pngquant", "-", "--speed", string(speed))
+	} else {
+		cmd = exec.Command("pngquant", "-", "--speed", string(speed))
+	}
 	cmd.Stdin = strings.NewReader(string(input))
 	var out bytes.Buffer
 	cmd.Stdout = &out
