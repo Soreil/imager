@@ -19,7 +19,7 @@ const outputDir = "outputData/"
 var cases = []testCase{
 	{inputDir + "wafel.webm", outputDir + "wafel.webm.png"},
 	{inputDir + "yuno.jpg", outputDir + "yuno.jpg.jpg"},
-	{inputDir + "yuno.png", outputDir + "yuno.png.png"},
+	//{inputDir + "yuno.png", outputDir + "yuno.png.png"},
 	{inputDir + "yuno.gif", outputDir + "yuno.gif.png"},
 	{inputDir + "PNG_transparency_demonstration_1.png", outputDir + "PNG_transparency_demonstration_1.png.png"},
 	{inputDir + "The United States of America.svg", outputDir + "The United States of America.svg.png"},
@@ -43,9 +43,9 @@ func TestDecode(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			thumb, inFormat, outFormat, err := Thumbnail(file, Normal)
+			thumb, outFormat, err := Thumbnail(file, Normal)
 			if err != nil {
-				t.Fatal(err, inFormat, outFormat, test)
+				t.Fatal(err, outFormat, test)
 			}
 			out, err := os.Create(test.output)
 			if err != nil {
