@@ -8,38 +8,45 @@ import (
 	"time"
 )
 
-type testCase struct {
-	input  string
-	output string
-}
-
-const inputDir = "inputData/"
-const outputDir = "outputData/"
-
-var cases = []testCase{
-	{inputDir + "wafel.webm", outputDir + "wafel.webm.png"},
-	{inputDir + "yuno.jpg", outputDir + "yuno.jpg.jpg"},
-	//{inputDir + "yuno.png", outputDir + "yuno.png.png"},
-	{inputDir + "yuno.gif", outputDir + "yuno.gif.png"},
-	{inputDir + "PNG_transparency_demonstration_1.png", outputDir + "PNG_transparency_demonstration_1.png.png"},
-	{inputDir + "The United States of America.svg", outputDir + "The United States of America.svg.png"},
-	{inputDir + "pdf.pdf", outputDir + "pdf.pdf.png"},
-}
+//Change inputDir to anything you feel like
+var inputDir = "inputData/"
+var outputDir = os.TempDir() + "/" + time.Now().String() + "/"
 
 func TestDecode(t *testing.T) {
+
 	if _, err := os.Stat(outputDir); err != nil {
-		os.Mkdir(outputDir, os.ModeDir+0755)
+		err := os.Mkdir(outputDir, os.ModeDir+0755)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Log("Output directory: ", outputDir)
 	}
+
+	in, err := os.Open(inputDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	names, err := in.Readdirnames(0)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.Chdir(inputDir); err != nil {
+		t.Fatal(err)
+	}
+
 	var wg sync.WaitGroup
-	for _, test := range cases {
-		wg.Add(1)
+	for _, test := range names {
 		startingTime := time.Now()
-		go func(test testCase) {
+		wg.Add(1)
+
+		go func(test string) {
 			defer wg.Done()
-			if _, err := os.Stat(test.input); err != nil {
+			if _, err := os.Stat(test); err != nil {
 				t.Fatal(err)
 			}
-			file, err := os.Open(test.input)
+			file, err := os.Open(test)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -47,7 +54,7 @@ func TestDecode(t *testing.T) {
 			if err != nil {
 				t.Fatal(err, outFormat, test)
 			}
-			out, err := os.Create(test.output)
+			out, err := os.Create(outputDir + test + "." + outFormat)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -56,6 +63,7 @@ func TestDecode(t *testing.T) {
 			}
 			t.Log(time.Now().Sub(startingTime), test)
 		}(test)
+
 	}
 	wg.Wait()
 }
