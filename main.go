@@ -39,19 +39,16 @@ func Thumbnail(r io.Reader, s image.Point) (io.Reader, string, error) {
 	img = scale(img, s)
 
 	var out bytes.Buffer
-	if imgString == "jpeg" {
+	switch imgString {
+	case "jpeg":
 		outputFormat = "jpeg"
-		if err := jpeg.Encode(&out, img, &jpgOptions); err != nil {
-			return nil, outputFormat, err
-		}
-	} else if imgString == "png" || imgString == "webm" || imgString == "pdf" || imgString == "gif" || imgString == "svg" {
+		err = jpeg.Encode(&out, img, &jpgOptions)
+	case "png", "webm", "pdf", "gif", "svg":
 		outputFormat = "png"
-		err := compressPNG(&out, img, fast)
-		if err != nil {
-			return nil, outputFormat, err
-		}
-	} else {
-		return nil, outputFormat, errors.New("I give up, I don't know what this file type is")
+		err = compressPNG(&out, img, fast)
+	default:
+		err = errors.New("Unsupported file type")
 	}
-	return &out, outputFormat, nil
+
+	return &out, outputFormat, err
 }
