@@ -60,7 +60,8 @@ func encode(imgString string, img image.Image) (io.Reader, string, error) {
 
 // TwoThumbnails creates takes a supported format file and outputs two
 // thumbnails of desired frame sizes. It is more efficient than calling
-// Thumbnail twice, because it only decodes the file once.
+// Thumbnail twice, because it only decodes the file once. Large should be
+// larger than small.
 func TwoThumbnails(r io.Reader, large image.Point, small image.Point) (
 	largeThumb io.Reader, smallThumb io.Reader, format string, err error,
 ) {
@@ -69,7 +70,7 @@ func TwoThumbnails(r io.Reader, large image.Point, small image.Point) (
 		return
 	}
 	scaledLarge := scale(img, large)
-	scaledSmall := scale(img, small)
+	scaledSmall := scale(scaledLarge, small)
 
 	largeThumb, format, err = encode(imgString, scaledLarge)
 	if err != nil {
