@@ -2,7 +2,9 @@ package imager
 
 import (
 	"io"
+	"io/ioutil"
 	"os"
+	"path/filepath"
 	"sync"
 	"testing"
 	"time"
@@ -46,10 +48,8 @@ func TestDecode(t *testing.T) {
 			if _, err := os.Stat(test); err != nil {
 				t.Fatal(err)
 			}
-			file, err := os.Open(test)
-			if err != nil {
-				t.Fatal(err)
-			}
+			file := open(test, t)
+			defer file.Close()
 			thumb, outFormat, err := Thumbnail(file, Normal)
 			if err != nil {
 				t.Fatal(err, outFormat, test)
@@ -66,4 +66,32 @@ func TestDecode(t *testing.T) {
 
 	}
 	wg.Wait()
+}
+
+func TestTwoThumbnails(t *testing.T) {
+	file := open("yuno.gif", t)
+	large, small, format, err := TwoThumbnails(file, Sharp, Normal)
+	if format != "png" {
+		t.Fatalf("Wrong format: %s", format)
+	}
+	assertError(err, t)
+	largeThumb, err := ioutil.ReadAll(large)
+	assertError(err, t)
+	smallThumb, err := ioutil.ReadAll(small)
+	assertError(err, t)
+	if len(smallThumb) > len(largeThumb) {
+		t.Fatal("Thumbnail sizes don't match")
+	}
+}
+
+func open(path string, t *testing.T) *os.File {
+	file, err := os.Open(filepath.FromSlash(path))
+	assertError(err, t)
+	return file
+}
+
+func assertError(err error, t *testing.T) {
+	if err != nil {
+		t.Fatal(err)
+	}
 }
