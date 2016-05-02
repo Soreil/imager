@@ -68,16 +68,16 @@ func TestDecode(t *testing.T) {
 	wg.Wait()
 }
 
-func TestTwoThumbnails(t *testing.T) {
+func TestThumbnails(t *testing.T) {
 	file := open("yuno.gif", t)
-	large, small, format, err := TwoThumbnails(file, Sharp, Normal)
+	thumbs, format, err := Thumbnails(file, Sharp, Normal)
 	if format != "png" {
 		t.Fatalf("Wrong format: %s", format)
 	}
 	assertError(err, t)
-	largeThumb, err := ioutil.ReadAll(large)
+	largeThumb, err := ioutil.ReadAll(thumbs[0])
 	assertError(err, t)
-	smallThumb, err := ioutil.ReadAll(small)
+	smallThumb, err := ioutil.ReadAll(thumbs[1])
 	assertError(err, t)
 	if len(smallThumb) > len(largeThumb) {
 		t.Fatal("Thumbnail sizes don't match")
