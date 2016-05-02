@@ -8,6 +8,7 @@ import (
 	_ "image/gif"
 	"image/jpeg"
 	"io"
+	"sort"
 
 	_ "github.com/Soreil/pdf"
 	_ "github.com/Soreil/svg"
@@ -58,24 +59,43 @@ func encode(imgString string, img image.Image) (io.Reader, string, error) {
 	return &out, format, err
 }
 
-// TwoThumbnails creates takes a supported format file and outputs two
-// thumbnails of desired frame sizes. It is more efficient than calling
-// Thumbnail twice, because it only decodes the file once. Large should be
-// larger than small.
-func TwoThumbnails(r io.Reader, large image.Point, small image.Point) (
-	largeThumb io.Reader, smallThumb io.Reader, format string, err error,
-) {
+//Type for sort.Sort
+type points []image.Point
+
+func (p points) Len() int {
+	return len(p)
+}
+
+func (p points) Less(i, j int) bool {
+	return !p[i].In(image.Rectangle{Max: p[j]})
+}
+
+func (p points) Swap(i, j int) {
+	p[i], p[j] = p[j], p[i]
+}
+
+//Thumbnails creates a thumbnail per size provided in sorted order from large to small to reduce the amount of computation required.
+func Thumbnails(r io.Reader, sizes ...image.Point) ([]io.Reader, string, error) {
 	img, imgString, err := image.Decode(r)
 	if err != nil {
-		return
+		return nil, "", err
 	}
-	scaledLarge := scale(img, large)
-	scaledSmall := scale(scaledLarge, small)
+	//Make it so we have them in decreasing sized order
+	sort.Sort(points(sizes))
 
-	largeThumb, format, err = encode(imgString, scaledLarge)
-	if err != nil {
-		return
+	scaled := make([]image.Image, len(sizes))
+	for i, size := range sizes {
+		scaled[i] = scale(img, size)
+		img = scaled[i]
 	}
-	smallThumb, _, err = encode(imgString, scaledSmall)
-	return
+
+	thumbs := make([]io.Reader, len(sizes))
+	var format string
+	for i, scale := range scaled {
+		thumbs[i], format, err = encode(imgString, scale)
+		if err != nil {
+			return thumbs, format, err
+		}
+	}
+	return thumbs, format, err
 }
