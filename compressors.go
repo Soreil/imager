@@ -8,8 +8,8 @@ import (
 )
 
 // PNGQuantization defines the lossyness and strength of PNG thumbnail
-// compression. Should be a positive number. 0 is lossless. 20 is the
-// default. Should not be modified concurently with thumbnailing.
+// compression. Should be a positive number. 0 is lossless.Should not be
+// modified concurently with thumbnailing.
 var PNGQuantization = 20
 
 //Compress PNG using imagequant

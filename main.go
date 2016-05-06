@@ -18,7 +18,9 @@ import (
 	"github.com/nfnt/resize"
 )
 
-var jpgOptions = jpeg.Options{jpeg.DefaultQuality}
+// JPEGOptions specifies the options to use for encoding JPEG format image
+// thumbnails. Should not be modified concurently with thumbnailing.
+var JPEGOptions = jpeg.Options{jpeg.DefaultQuality}
 
 //TODO(sjon): evaluate best resizing algorithm
 //Resizes the image to max dimensions
@@ -46,7 +48,7 @@ func encode(imgString string, img image.Image) (io.Reader, string, error) {
 	switch imgString {
 	case "jpeg":
 		format = "jpeg"
-		err = jpeg.Encode(&out, img, &jpgOptions)
+		err = jpeg.Encode(&out, img, &JPEGOptions)
 	case "png", "webm", "pdf", "gif", "svg":
 		format = "png"
 		err = compressPNG(&out, img)
