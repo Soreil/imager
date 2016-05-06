@@ -1,7 +1,7 @@
 package imager
 
 import (
-	"github.com/bakape/lossypng/lossypng"
+	"github.com/foobaz/lossypng/lossypng"
 	"image"
 	"image/png"
 	"io"
