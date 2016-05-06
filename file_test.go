@@ -1,6 +1,7 @@
 package imager
 
 import (
+	"image"
 	"io"
 	"io/ioutil"
 	"os"
@@ -11,8 +12,15 @@ import (
 )
 
 //Change inputDir to anything you feel like
-var inputDir = "inputData/"
-var outputDir = os.TempDir() + "/" + time.Now().String() + "/"
+var (
+	// Regular quality preset
+	Normal = image.Point{X: 250, Y: 250}
+
+	// High quality preset
+	Sharp     = image.Point{X: 500, Y: 500}
+	inputDir  = "inputData/"
+	outputDir = os.TempDir() + "/" + time.Now().String() + "/"
+)
 
 func TestDecode(t *testing.T) {
 

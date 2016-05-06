@@ -1,27 +1,26 @@
-//Converts media types in to size optimised thumbnails
+// Package imager converts media types in to size optimised thumbnails
 package imager
 
 import (
 	"bytes"
 	"errors"
 	"image"
-	_ "image/gif"
 	"image/jpeg"
 	"io"
 	"sort"
 
+	// Import decoders
 	_ "github.com/Soreil/pdf"
 	_ "github.com/Soreil/svg"
 	_ "github.com/Soreil/webm"
+	_ "image/gif"
 
 	"github.com/nfnt/resize"
 )
 
-//Regular quality preset
-var Normal = image.Point{X: 250, Y: 250}
-
-//High quality preset
-var Sharp = image.Point{X: 500, Y: 500}
+// JPEGOptions specifies the options to use for encoding JPEG format image
+// thumbnails. Should not be modified concurently with thumbnailing.
+var JPEGOptions = jpeg.Options{jpeg.DefaultQuality}
 
 //TODO(sjon): evaluate best resizing algorithm
 //Resizes the image to max dimensions
@@ -49,10 +48,10 @@ func encode(imgString string, img image.Image) (io.Reader, string, error) {
 	switch imgString {
 	case "jpeg":
 		format = "jpeg"
-		err = jpeg.Encode(&out, img, &jpgOptions)
+		err = jpeg.Encode(&out, img, &JPEGOptions)
 	case "png", "webm", "pdf", "gif", "svg":
 		format = "png"
-		err = compressPNG(&out, img, fast)
+		err = compressPNG(&out, img)
 	default:
 		err = errors.New("Unsupported file type")
 	}
