@@ -10,10 +10,13 @@ import (
 	"sort"
 
 	// Import decoders
+	_ "image/gif"
+
 	_ "github.com/Soreil/pdf"
 	_ "github.com/Soreil/svg"
-	_ "github.com/Soreil/webm"
-	_ "image/gif"
+	_ "github.com/Soreil/video/mkv"
+	_ "github.com/Soreil/video/mp4"
+	_ "github.com/Soreil/video/webm"
 
 	"github.com/nfnt/resize"
 )
@@ -49,7 +52,7 @@ func encode(imgString string, img image.Image) (io.Reader, string, error) {
 	case "jpeg":
 		format = "jpeg"
 		err = jpeg.Encode(&out, img, &JPEGOptions)
-	case "png", "webm", "pdf", "gif", "svg":
+	case "png", "webm", "pdf", "gif", "svg", "mkv", "mp4":
 		format = "png"
 		err = compressPNG(&out, img)
 	default:
