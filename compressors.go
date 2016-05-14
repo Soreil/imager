@@ -1,10 +1,11 @@
 package imager
 
 import (
-	"github.com/foobaz/lossypng/lossypng"
 	"image"
 	"image/png"
 	"io"
+
+	"github.com/foobaz/lossypng/lossypng"
 )
 
 // PNGQuantization defines the lossyness and strength of PNG thumbnail
@@ -14,6 +15,6 @@ var PNGQuantization = 20
 
 //Compress PNG using imagequant
 func compressPNG(w io.Writer, img image.Image) error {
-	comresssed := lossypng.Compress(img, lossypng.NoConversion, PNGQuantization)
-	return png.Encode(w, comresssed)
+	compresssed := lossypng.Compress(img, lossypng.NoConversion, PNGQuantization)
+	return png.Encode(w, compresssed)
 }
