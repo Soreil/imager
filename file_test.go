@@ -18,7 +18,7 @@ var (
 
 	// High quality preset
 	Sharp     = image.Point{X: 500, Y: 500}
-	inputDir  = "inputData/"
+	inputDir  = "testdata/"
 	outputDir = os.TempDir() + "/" + time.Now().String() + "/"
 )
 
