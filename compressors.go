@@ -15,6 +15,6 @@ var PNGQuantization = 20
 
 //Compress PNG using imagequant
 func compressPNG(w io.Writer, img image.Image) error {
-	compresssed := lossypng.Compress(img, lossypng.NoConversion, PNGQuantization)
-	return png.Encode(w, compresssed)
+	compressed := lossypng.Compress(img, lossypng.NoConversion, PNGQuantization)
+	return png.Encode(w, compressed)
 }
