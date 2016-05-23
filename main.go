@@ -23,7 +23,7 @@ import (
 
 // JPEGOptions specifies the options to use for encoding JPEG format image
 // thumbnails. Should not be modified concurently with thumbnailing.
-var JPEGOptions = jpeg.Options{jpeg.DefaultQuality}
+var JPEGOptions = jpeg.Options{Quality: jpeg.DefaultQuality}
 
 //TODO(sjon): evaluate best resizing algorithm
 //Resizes the image to max dimensions
@@ -39,26 +39,36 @@ func Thumbnail(r io.Reader, s image.Point) (io.Reader, string, error) {
 		return nil, "", err
 	}
 	img = scale(img, s)
-	return encode(imgString, img)
+	format := autoSelectFormat(imgString)
+	out, err := Encode(img, format)
+	return out, format, err
 }
 
-func encode(imgString string, img image.Image) (io.Reader, string, error) {
+// Automatically select the output thumbnail image format
+func autoSelectFormat(source string) string {
+	if source == "jpeg" {
+		return source
+	}
+	return "png"
+}
+
+// Encode encodes a given image.Image into the desired format. Currently only
+// JPEG and PNG are supported. PNGs are lossily compressed, as per the
+// PNGQuantization setting.
+func Encode(img image.Image, format string) (io.Reader, error) {
 	var (
-		out    bytes.Buffer
-		format string
-		err    error
+		out bytes.Buffer
+		err error
 	)
-	switch imgString {
+	switch format {
 	case "jpeg":
-		format = "jpeg"
 		err = jpeg.Encode(&out, img, &JPEGOptions)
-	case "png", "webm", "pdf", "gif", "svg", "mkv", "mp4":
-		format = "png"
+	case "png":
 		err = compressPNG(&out, img)
 	default:
 		err = errors.New("Unsupported file type")
 	}
-	return &out, format, err
+	return &out, err
 }
 
 //Type for sort.Sort
@@ -76,8 +86,30 @@ func (p points) Swap(i, j int) {
 	p[i], p[j] = p[j], p[i]
 }
 
-//Thumbnails creates a thumbnail per size provided in sorted order from large to small to reduce the amount of computation required.
+// Thumbnails creates a thumbnail per size provided in sorted order from large
+// to small to reduce the amount of computation required.
 func Thumbnails(r io.Reader, sizes ...image.Point) ([]io.Reader, string, error) {
+	scaled, imgString, err := DecodeMany(r, sizes...)
+	if err != nil {
+		return nil, "", err
+	}
+
+	thumbs := make([]io.Reader, len(sizes))
+	format := autoSelectFormat(imgString)
+	for i, scale := range scaled {
+		thumbs[i], err = Encode(scale, format)
+		if err != nil {
+			return thumbs, format, err
+		}
+	}
+	return thumbs, format, err
+}
+
+// DecodeMany creates an image.Image thumbnail per size provided in sorted
+// order from large to small to reduce the amount of computation required.
+func DecodeMany(r io.Reader, sizes ...image.Point) (
+	[]image.Image, string, error,
+) {
 	img, imgString, err := image.Decode(r)
 	if err != nil {
 		return nil, "", err
@@ -90,14 +122,5 @@ func Thumbnails(r io.Reader, sizes ...image.Point) ([]io.Reader, string, error) 
 		scaled[i] = scale(img, size)
 		img = scaled[i]
 	}
-
-	thumbs := make([]io.Reader, len(sizes))
-	var format string
-	for i, scale := range scaled {
-		thumbs[i], format, err = encode(imgString, scale)
-		if err != nil {
-			return thumbs, format, err
-		}
-	}
-	return thumbs, format, err
+	return scaled, imgString, err
 }
