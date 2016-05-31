@@ -9,6 +9,7 @@ import (
 	"sync"
 	"testing"
 	"time"
+	"fmt"
 )
 
 //Change inputDir to anything you feel like
@@ -19,7 +20,7 @@ var (
 	// High quality preset
 	Sharp     = image.Point{X: 500, Y: 500}
 	inputDir  = "testdata/"
-	outputDir = os.TempDir() + "/" + time.Now().String() + "/"
+	outputDir = os.TempDir() + string(os.PathSeparator) + fmt.Sprint(time.Now().UnixNano()) + string(os.PathSeparator)
 )
 
 func TestDecode(t *testing.T) {
