@@ -1,6 +1,7 @@
 package imager
 
 import (
+	"fmt"
 	"image"
 	"io"
 	"io/ioutil"
@@ -9,7 +10,6 @@ import (
 	"sync"
 	"testing"
 	"time"
-	"fmt"
 )
 
 //Change inputDir to anything you feel like
@@ -59,7 +59,7 @@ func TestDecode(t *testing.T) {
 			}
 			file := open(test, t)
 			defer file.Close()
-			thumb, outFormat, err := Thumbnail(file, Normal)
+			thumb, outFormat, _, err := Thumbnail(file, Normal)
 			if err != nil {
 				t.Fatal(err, outFormat, test)
 			}
@@ -79,7 +79,7 @@ func TestDecode(t *testing.T) {
 
 func TestThumbnails(t *testing.T) {
 	file := open("yuno.gif", t)
-	thumbs, format, err := Thumbnails(file, Sharp, Normal)
+	thumbs, format, _, err := Thumbnails(file, Sharp, Normal)
 	if format != "png" {
 		t.Fatalf("Wrong format: %s", format)
 	}
