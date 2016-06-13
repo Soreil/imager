@@ -35,7 +35,7 @@ type Thumb struct {
 
 //TODO(sjon): evaluate best resizing algorithm
 //Resizes the image to max dimensions
-func scale(img image.Image, p image.Point) image.Image {
+func Scale(img image.Image, p image.Point) image.Image {
 	return resize.Thumbnail(uint(p.X), uint(p.Y), img, resize.Bilinear)
 }
 
@@ -50,7 +50,7 @@ func Thumbnail(r io.Reader, s image.Point) (Thumb, string, image.Rectangle, erro
 	}
 
 	srcDims := img.Bounds()
-	img = scale(img, s)
+	img = Scale(img, s)
 	format := autoSelectFormat(imgString)
 	out, err := Encode(img, format)
 	thumb := Thumb{
@@ -120,7 +120,7 @@ func Thumbnails(r io.Reader, sizes ...image.Point) (
 	sort.Sort(points(sizes))
 	scaled := make([]image.Image, len(sizes))
 	for i, size := range sizes {
-		scaled[i] = scale(img, size)
+		scaled[i] = Scale(img, size)
 		img = scaled[i]
 	}
 
