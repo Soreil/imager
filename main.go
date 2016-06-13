@@ -26,15 +26,10 @@ import (
 // thumbnails. Should not be modified concurently with thumbnailing.
 var JPEGOptions = jpeg.Options{Quality: jpeg.DefaultQuality}
 
-// Dimensions contains the width and height of an image
-type Dimensions struct {
-	width, height int
-}
-
 // Thumb contains an io.Reader of the generated thumbnail and its width
 // and height
 type Thumb struct {
-	Dimensions
+	image.Config
 	io.Reader
 }
 
@@ -48,10 +43,10 @@ func scale(img image.Image, p image.Point) image.Image {
 // maximum dimensions of the thumbnail. Returns a Thumb of the resulting
 // thumbnail, the format of the thumbnail, the dimensions of the source image
 // and error, if any.
-func Thumbnail(r io.Reader, s image.Point) (Thumb, string, Dimensions, error) {
+func Thumbnail(r io.Reader, s image.Point) (Thumb, string, image.Config, error) {
 	img, imgString, err := image.Decode(r)
 	if err != nil {
-		return Thumb{}, "", Dimensions{}, err
+		return Thumb{}, "", image.Config{}, err
 	}
 
 	srcDims := getDims(img)
@@ -59,8 +54,8 @@ func Thumbnail(r io.Reader, s image.Point) (Thumb, string, Dimensions, error) {
 	format := autoSelectFormat(imgString)
 	out, err := Encode(img, format)
 	thumb := Thumb{
-		Dimensions: getDims(img),
-		Reader:     out,
+		Config: getDims(img),
+		Reader: out,
 	}
 	return thumb, format, srcDims, err
 }
@@ -74,11 +69,11 @@ func autoSelectFormat(source string) string {
 }
 
 // Compute the width and height of an image
-func getDims(img image.Image) Dimensions {
+func getDims(img image.Image) image.Config {
 	rect := img.Bounds()
-	return Dimensions{
-		width:  rect.Max.X - rect.Min.X,
-		height: rect.Max.Y - rect.Min.Y,
+	return image.Config{
+		Width:  rect.Max.X - rect.Min.X,
+		Height: rect.Max.Y - rect.Min.Y,
 	}
 }
 
@@ -121,11 +116,11 @@ func (p points) Swap(i, j int) {
 // []Thumb of thumbnails, the format string of the thumbnails, dimensions of the
 // source image and error, if any.
 func Thumbnails(r io.Reader, sizes ...image.Point) (
-	[]Thumb, string, Dimensions, error,
+	[]Thumb, string, image.Config, error,
 ) {
 	img, imgString, err := image.Decode(r)
 	if err != nil {
-		return nil, "", Dimensions{}, err
+		return nil, "", image.Config{}, err
 	}
 
 	srcDims := getDims(img)
@@ -147,8 +142,8 @@ func Thumbnails(r io.Reader, sizes ...image.Point) (
 		}
 
 		thumbs[i] = Thumb{
-			Dimensions: getDims(scale),
-			Reader:     reader,
+			Config: getDims(scale),
+			Reader: reader,
 		}
 	}
 
