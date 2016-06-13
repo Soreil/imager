@@ -29,7 +29,7 @@ var JPEGOptions = jpeg.Options{Quality: jpeg.DefaultQuality}
 // Thumb contains an io.Reader of the generated thumbnail and its width
 // and height
 type Thumb struct {
-	image.Config
+	image.Rectangle
 	io.Reader
 }
 
@@ -43,19 +43,19 @@ func scale(img image.Image, p image.Point) image.Image {
 // maximum dimensions of the thumbnail. Returns a Thumb of the resulting
 // thumbnail, the format of the thumbnail, the dimensions of the source image
 // and error, if any.
-func Thumbnail(r io.Reader, s image.Point) (Thumb, string, image.Config, error) {
+func Thumbnail(r io.Reader, s image.Point) (Thumb, string, image.Rectangle, error) {
 	img, imgString, err := image.Decode(r)
 	if err != nil {
-		return Thumb{}, "", image.Config{}, err
+		return Thumb{}, "", image.Rectangle{}, err
 	}
 
-	srcDims := getDims(img)
+	srcDims := img.Bounds()
 	img = scale(img, s)
 	format := autoSelectFormat(imgString)
 	out, err := Encode(img, format)
 	thumb := Thumb{
-		Config: getDims(img),
-		Reader: out,
+		Rectangle: img.Bounds(),
+		Reader:    out,
 	}
 	return thumb, format, srcDims, err
 }
@@ -66,15 +66,6 @@ func autoSelectFormat(source string) string {
 		return source
 	}
 	return "png"
-}
-
-// Compute the width and height of an image
-func getDims(img image.Image) image.Config {
-	rect := img.Bounds()
-	return image.Config{
-		Width:  rect.Max.X - rect.Min.X,
-		Height: rect.Max.Y - rect.Min.Y,
-	}
 }
 
 // Encode encodes a given image.Image into the desired format. Currently only
@@ -116,14 +107,14 @@ func (p points) Swap(i, j int) {
 // []Thumb of thumbnails, the format string of the thumbnails, dimensions of the
 // source image and error, if any.
 func Thumbnails(r io.Reader, sizes ...image.Point) (
-	[]Thumb, string, image.Config, error,
+	[]Thumb, string, image.Rectangle, error,
 ) {
 	img, imgString, err := image.Decode(r)
 	if err != nil {
-		return nil, "", image.Config{}, err
+		return nil, "", image.Rectangle{}, err
 	}
 
-	srcDims := getDims(img)
+	srcDims := img.Bounds()
 
 	//Make it so we have them in decreasing sized order
 	sort.Sort(points(sizes))
@@ -142,8 +133,8 @@ func Thumbnails(r io.Reader, sizes ...image.Point) (
 		}
 
 		thumbs[i] = Thumb{
-			Config: getDims(scale),
-			Reader: reader,
+			Rectangle: scale.Bounds(),
+			Reader:    reader,
 		}
 	}
 
