@@ -9,9 +9,10 @@ import (
 	"io"
 	"sort"
 
-	// Import decoders
+	// Import gif decoder
 	_ "image/gif"
 
+	// And our own decoders
 	_ "github.com/Soreil/pdf"
 	_ "github.com/Soreil/svg"
 	_ "github.com/Soreil/video/mkv"
@@ -25,23 +26,43 @@ import (
 // thumbnails. Should not be modified concurently with thumbnailing.
 var JPEGOptions = jpeg.Options{Quality: jpeg.DefaultQuality}
 
+// Dimensions contains the width and height of an image
+type Dimensions struct {
+	width, height int
+}
+
+// Thumb contains an io.Reader of the generated thumbnail and its width
+// and height
+type Thumb struct {
+	Dimensions
+	io.Reader
+}
+
 //TODO(sjon): evaluate best resizing algorithm
 //Resizes the image to max dimensions
 func scale(img image.Image, p image.Point) image.Image {
 	return resize.Thumbnail(uint(p.X), uint(p.Y), img, resize.Bilinear)
 }
 
-// Thumbnail makes a thumbnail out of a decodable media file.
-// Sizes are the maximum dimensions of the thumbnail
-func Thumbnail(r io.Reader, s image.Point) (io.Reader, string, error) {
+// Thumbnail makes a thumbnail out of a decodable media file. Sizes are the
+// maximum dimensions of the thumbnail. Returns a Thumb of the resulting
+// thumbnail, the format of the thumbnail, the dimensions of the source image
+// and error, if any.
+func Thumbnail(r io.Reader, s image.Point) (Thumb, string, Dimensions, error) {
 	img, imgString, err := image.Decode(r)
 	if err != nil {
-		return nil, "", err
+		return Thumb{}, "", Dimensions{}, err
 	}
+
+	srcDims := getDims(img)
 	img = scale(img, s)
 	format := autoSelectFormat(imgString)
 	out, err := Encode(img, format)
-	return out, format, err
+	thumb := Thumb{
+		Dimensions: getDims(img),
+		Reader:     out,
+	}
+	return thumb, format, srcDims, err
 }
 
 // Automatically select the output thumbnail image format
@@ -50,6 +71,15 @@ func autoSelectFormat(source string) string {
 		return source
 	}
 	return "png"
+}
+
+// Compute the width and height of an image
+func getDims(img image.Image) Dimensions {
+	rect := img.Bounds()
+	return Dimensions{
+		width:  rect.Max.X - rect.Min.X,
+		height: rect.Max.Y - rect.Min.Y,
+	}
 }
 
 // Encode encodes a given image.Image into the desired format. Currently only
@@ -87,40 +117,40 @@ func (p points) Swap(i, j int) {
 }
 
 // Thumbnails creates a thumbnail per size provided in sorted order from large
-// to small to reduce the amount of computation required.
-func Thumbnails(r io.Reader, sizes ...image.Point) ([]io.Reader, string, error) {
-	scaled, imgString, err := DecodeMany(r, sizes...)
-	if err != nil {
-		return nil, "", err
-	}
-
-	thumbs := make([]io.Reader, len(sizes))
-	format := autoSelectFormat(imgString)
-	for i, scale := range scaled {
-		thumbs[i], err = Encode(scale, format)
-		if err != nil {
-			return thumbs, format, err
-		}
-	}
-	return thumbs, format, err
-}
-
-// DecodeMany creates an image.Image thumbnail per size provided in sorted
-// order from large to small to reduce the amount of computation required.
-func DecodeMany(r io.Reader, sizes ...image.Point) (
-	[]image.Image, string, error,
+// to small to reduce the amount of computation required. Returns the sorted
+// []Thumb of thumbnails, the format string of the thumbnails, dimensions of the
+// source image and error, if any.
+func Thumbnails(r io.Reader, sizes ...image.Point) (
+	[]Thumb, string, Dimensions, error,
 ) {
 	img, imgString, err := image.Decode(r)
 	if err != nil {
-		return nil, "", err
+		return nil, "", Dimensions{}, err
 	}
+
+	srcDims := getDims(img)
+
 	//Make it so we have them in decreasing sized order
 	sort.Sort(points(sizes))
-
 	scaled := make([]image.Image, len(sizes))
 	for i, size := range sizes {
 		scaled[i] = scale(img, size)
 		img = scaled[i]
 	}
-	return scaled, imgString, err
+
+	thumbs := make([]Thumb, len(sizes))
+	format := autoSelectFormat(imgString)
+	for i, scale := range scaled {
+		reader, err := Encode(scale, format)
+		if err != nil {
+			return thumbs, format, srcDims, err
+		}
+
+		thumbs[i] = Thumb{
+			Dimensions: getDims(scale),
+			Reader:     reader,
+		}
+	}
+
+	return thumbs, format, srcDims, err
 }
