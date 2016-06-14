@@ -30,11 +30,11 @@ var JPEGOptions = jpeg.Options{Quality: jpeg.DefaultQuality}
 // and height
 type Thumb struct {
 	image.Rectangle
-	io.Reader
+	bytes.Buffer
 }
 
-//TODO(sjon): evaluate best resizing algorithm
-//Resizes the image to max dimensions
+// Scale resizes the image to max dimensions
+// TODO(sjon): evaluate best resizing algorithm
 func Scale(img image.Image, p image.Point) image.Image {
 	return resize.Thumbnail(uint(p.X), uint(p.Y), img, resize.Bilinear)
 }
@@ -43,19 +43,21 @@ func Scale(img image.Image, p image.Point) image.Image {
 // maximum dimensions of the thumbnail. Returns a Thumb of the resulting
 // thumbnail, the format of the thumbnail, the dimensions of the source image
 // and error, if any.
-func Thumbnail(r io.Reader, s image.Point) (Thumb, string, image.Rectangle, error) {
+func Thumbnail(r io.Reader, s image.Point) (
+	*Thumb, string, image.Rectangle, error,
+) {
 	img, imgString, err := image.Decode(r)
 	if err != nil {
-		return Thumb{}, "", image.Rectangle{}, err
+		return nil, "", image.Rectangle{}, err
 	}
 
 	srcDims := img.Bounds()
 	img = Scale(img, s)
 	format := autoSelectFormat(imgString)
 	out, err := Encode(img, format)
-	thumb := Thumb{
+	thumb := &Thumb{
 		Rectangle: img.Bounds(),
-		Reader:    out,
+		Buffer:    *out,
 	}
 	return thumb, format, srcDims, err
 }
@@ -71,7 +73,7 @@ func autoSelectFormat(source string) string {
 // Encode encodes a given image.Image into the desired format. Currently only
 // JPEG and PNG are supported. PNGs are lossily compressed, as per the
 // PNGQuantization setting.
-func Encode(img image.Image, format string) (io.Reader, error) {
+func Encode(img image.Image, format string) (*bytes.Buffer, error) {
 	var (
 		out bytes.Buffer
 		err error
@@ -107,7 +109,7 @@ func (p points) Swap(i, j int) {
 // []Thumb of thumbnails, the format string of the thumbnails, dimensions of the
 // source image and error, if any.
 func Thumbnails(r io.Reader, sizes ...image.Point) (
-	[]Thumb, string, image.Rectangle, error,
+	[]*Thumb, string, image.Rectangle, error,
 ) {
 	img, imgString, err := image.Decode(r)
 	if err != nil {
@@ -124,17 +126,17 @@ func Thumbnails(r io.Reader, sizes ...image.Point) (
 		img = scaled[i]
 	}
 
-	thumbs := make([]Thumb, len(sizes))
+	thumbs := make([]*Thumb, len(sizes))
 	format := autoSelectFormat(imgString)
 	for i, scale := range scaled {
-		reader, err := Encode(scale, format)
+		buf, err := Encode(scale, format)
 		if err != nil {
 			return thumbs, format, srcDims, err
 		}
 
-		thumbs[i] = Thumb{
+		thumbs[i] = &Thumb{
 			Rectangle: scale.Bounds(),
-			Reader:    reader,
+			Buffer:    *buf,
 		}
 	}
 
