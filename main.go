@@ -11,7 +11,7 @@ import (
 
 	// Import decoders
 	_ "image/gif"
-
+	// Psuedo image decoders
 	_ "github.com/Soreil/pdf"
 	_ "github.com/Soreil/svg"
 	_ "github.com/Soreil/video/mkv"
