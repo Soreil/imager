@@ -9,9 +9,14 @@ import (
 	"io"
 	"sort"
 
-	// Import decoders
+	// Import gif decoder
 	_ "image/gif"
+<<<<<<< HEAD
 	// Psuedo image decoders
+=======
+
+	// And our own decoders
+>>>>>>> fc0710d537f5d41686bc2c9b1f962e5c8e1abd34
 	_ "github.com/Soreil/pdf"
 	_ "github.com/Soreil/svg"
 	_ "github.com/Soreil/video/mkv"
@@ -25,23 +30,40 @@ import (
 // thumbnails. Should not be modified concurently with thumbnailing.
 var JPEGOptions = jpeg.Options{Quality: jpeg.DefaultQuality}
 
-//TODO(sjon): evaluate best resizing algorithm
-//Resizes the image to max dimensions
-func scale(img image.Image, p image.Point) image.Image {
+// Thumb contains an io.Reader of the generated thumbnail and its width
+// and height
+type Thumb struct {
+	image.Rectangle
+	bytes.Buffer
+}
+
+// Scale resizes the image to max dimensions
+// TODO(sjon): evaluate best resizing algorithm
+func Scale(img image.Image, p image.Point) image.Image {
 	return resize.Thumbnail(uint(p.X), uint(p.Y), img, resize.Bilinear)
 }
 
-// Thumbnail makes a thumbnail out of a decodable media file.
-// Sizes are the maximum dimensions of the thumbnail
-func Thumbnail(r io.Reader, s image.Point) (io.Reader, string, error) {
+// Thumbnail makes a thumbnail out of a decodable media file. Sizes are the
+// maximum dimensions of the thumbnail. Returns a Thumb of the resulting
+// thumbnail, the format of the thumbnail, the dimensions of the source image
+// and error, if any.
+func Thumbnail(r io.Reader, s image.Point) (
+	*Thumb, string, image.Rectangle, error,
+) {
 	img, imgString, err := image.Decode(r)
 	if err != nil {
-		return nil, "", err
+		return nil, "", image.Rectangle{}, err
 	}
-	img = scale(img, s)
+
+	srcDims := img.Bounds()
+	img = Scale(img, s)
 	format := autoSelectFormat(imgString)
 	out, err := Encode(img, format)
-	return out, format, err
+	thumb := &Thumb{
+		Rectangle: img.Bounds(),
+		Buffer:    *out,
+	}
+	return thumb, format, srcDims, err
 }
 
 // Automatically select the output thumbnail image format
@@ -55,7 +77,7 @@ func autoSelectFormat(source string) string {
 // Encode encodes a given image.Image into the desired format. Currently only
 // JPEG and PNG are supported. PNGs are lossily compressed, as per the
 // PNGQuantization setting.
-func Encode(img image.Image, format string) (io.Reader, error) {
+func Encode(img image.Image, format string) (*bytes.Buffer, error) {
 	var (
 		out bytes.Buffer
 		err error
@@ -87,40 +109,40 @@ func (p points) Swap(i, j int) {
 }
 
 // Thumbnails creates a thumbnail per size provided in sorted order from large
-// to small to reduce the amount of computation required.
-func Thumbnails(r io.Reader, sizes ...image.Point) ([]io.Reader, string, error) {
-	scaled, imgString, err := DecodeMany(r, sizes...)
-	if err != nil {
-		return nil, "", err
-	}
-
-	thumbs := make([]io.Reader, len(sizes))
-	format := autoSelectFormat(imgString)
-	for i, scale := range scaled {
-		thumbs[i], err = Encode(scale, format)
-		if err != nil {
-			return thumbs, format, err
-		}
-	}
-	return thumbs, format, err
-}
-
-// DecodeMany creates an image.Image thumbnail per size provided in sorted
-// order from large to small to reduce the amount of computation required.
-func DecodeMany(r io.Reader, sizes ...image.Point) (
-	[]image.Image, string, error,
+// to small to reduce the amount of computation required. Returns the sorted
+// []Thumb of thumbnails, the format string of the thumbnails, dimensions of the
+// source image and error, if any.
+func Thumbnails(r io.Reader, sizes ...image.Point) (
+	[]*Thumb, string, image.Rectangle, error,
 ) {
 	img, imgString, err := image.Decode(r)
 	if err != nil {
-		return nil, "", err
+		return nil, "", image.Rectangle{}, err
 	}
+
+	srcDims := img.Bounds()
+
 	//Make it so we have them in decreasing sized order
 	sort.Sort(points(sizes))
-
 	scaled := make([]image.Image, len(sizes))
 	for i, size := range sizes {
-		scaled[i] = scale(img, size)
+		scaled[i] = Scale(img, size)
 		img = scaled[i]
 	}
-	return scaled, imgString, err
+
+	thumbs := make([]*Thumb, len(sizes))
+	format := autoSelectFormat(imgString)
+	for i, scale := range scaled {
+		buf, err := Encode(scale, format)
+		if err != nil {
+			return thumbs, format, srcDims, err
+		}
+
+		thumbs[i] = &Thumb{
+			Rectangle: scale.Bounds(),
+			Buffer:    *buf,
+		}
+	}
+
+	return thumbs, format, srcDims, err
 }
