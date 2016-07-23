@@ -11,12 +11,8 @@ import (
 
 	// Import gif decoder
 	_ "image/gif"
-<<<<<<< HEAD
-	// Psuedo image decoders
-=======
 
 	// And our own decoders
->>>>>>> fc0710d537f5d41686bc2c9b1f962e5c8e1abd34
 	_ "github.com/Soreil/pdf"
 	_ "github.com/Soreil/svg"
 	_ "github.com/Soreil/video/mkv"
