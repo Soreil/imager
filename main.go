@@ -12,13 +12,6 @@ import (
 	// Import gif decoder
 	_ "image/gif"
 
-	// And our own decoders
-	_ "github.com/Soreil/pdf"
-	_ "github.com/Soreil/svg"
-	_ "github.com/Soreil/video/mkv"
-	_ "github.com/Soreil/video/mp4"
-	_ "github.com/Soreil/video/webm"
-
 	"github.com/nfnt/resize"
 )
 
