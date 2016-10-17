@@ -1,4 +1,5 @@
-// Package imager converts media types in to size optimised thumbnails
+// Package imager converts media types in to size optimised thumbnails. To
+// handle thumbnailing specific formats import their respective driver packages.
 package imager
 
 import (
